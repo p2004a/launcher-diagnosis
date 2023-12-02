@@ -2,6 +2,7 @@
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
+const got = require("got");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -29,8 +30,40 @@ ipcMain.on("start-diagnosis", (event, arg) => {
   }
   send("start");
 
-  setTimeout(() => {
-    send("done.");
-    event.sender.send("end-diagnosis");
-  }, 1000);
+  scenario(send)
+    .then(() => {
+      send("done.");
+      event.sender.send("end-diagnosis");
+    })
+    .catch((err) => {
+      send("error.");
+      send(JSON.stringify(err));
+      event.sender.send("end-diagnosis");
+    });
 });
+
+// Diagnosis scenario
+async function scenario(log) {
+  const url = "https://launcher-config.beyondallreason.dev/config.json";
+  //const url = "https://httpbin.org/status/500";
+
+  log(`requesting ${url}`);
+  const request = got(url, {
+    timeout: { request: 90000 },
+    hooks: {
+      beforeRetry: [
+        (options, error, retryCount) => {
+          log(`error in query, will retry: ${JSON.stringify(error)}`);
+        },
+      ],
+      beforeRequest: [
+        (options) => {
+          log(`starting real request}`);
+        },
+      ],
+    },
+  });
+
+  const response = await request;
+  log(`got response: ${response.statusCode} ${response.statusMessage}`);
+}
