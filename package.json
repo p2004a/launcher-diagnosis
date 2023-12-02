@@ -1,0 +1,31 @@
+{
+    "name": "launcher-diagnosis",
+    "version": "0.0.1",
+    "description": "Helper for diagnosing issues with electron",
+    "main": "src/main.js",
+    "scripts": {
+      "start": "electron .",
+      "build-linux": "electron-builder -l",
+      "build-win": "electron-builder -w",
+      "build": "electron-builder -wl"
+    },
+    "author": "Marek Rusinowski",
+    "license": "MIT",
+    "build": {
+      "appId": "dev.marekr.launcher-diagnosis",
+      "linux": {
+        "target": "AppImage"
+
+      },
+      "win": {
+        "target": "portable"
+      }
+    },
+    "dependencies": {
+      "got": "11.8.6"
+    },
+    "devDependencies": {
+      "electron": "25.4.0",
+      "electron-builder": "24.6.3"
+    }
+}
