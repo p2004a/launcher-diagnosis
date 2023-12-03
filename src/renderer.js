@@ -4,12 +4,16 @@ window.onload = () => {
   const out = document.getElementById("diagnosis-out");
   const btn = document.getElementById("start");
   const url = document.getElementById("url");
+  const dnsOrder = document.getElementById("dns-order");
 
   btn.addEventListener("click", () => {
     if (btn.disabled) return;
     out.textContent = "";
-    diagnosis.start(url.value.trim());
-    btn.innerText = "running..."
+    diagnosis.start({
+      url: url.value.trim(),
+      dnsOrder: dnsOrder.value,
+    });
+    btn.innerText = "running...";
     btn.disabled = true;
   });
 

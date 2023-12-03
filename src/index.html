@@ -9,8 +9,18 @@
   </head>
   <body>
     <h3>Diagnostics</h3>
-    <button id="start">Start</button>
-    <input type="text" id="url" value="https://launcher-config.beyondallreason.dev/config.json" />
+    <p>
+      <label for="url">URL to query</label>
+      <input type="text" id="url" value="https://launcher-config.beyondallreason.dev/config.json" />
+      <br>
+      <label for="dns-order">Default DNS order</label>
+      <select id="dns-order">
+        <option value="ipv4first">IPv4 First</option>
+        <option value="verbatim" selected>Verbatim</option>
+      </select>
+      <br>
+      <button id="start">Start</button>
+    </p>
     <pre id="diagnosis-out"></pre>
   </body>
 </html>

@@ -4,6 +4,8 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
 const got = require("got");
 const axios = require("axios");
+const dns = require("node:dns").promises;
+const { setDefaultResultOrder, getDefaultResultOrder } = require("node:dns");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -21,7 +23,10 @@ function createWindow() {
 app.whenReady().then(createWindow);
 app.on("window-all-closed", () => app.quit());
 
-ipcMain.on("start-diagnosis", (event, url) => {
+// DNS result order
+ipcMain.on("set-dns-result-order", (event, order) => {});
+
+ipcMain.on("start-diagnosis", (event, config) => {
   const start = Date.now();
   function send(msg) {
     event.sender.send(
@@ -31,7 +36,7 @@ ipcMain.on("start-diagnosis", (event, url) => {
   }
   send("start");
 
-  scenario(send, url)
+  scenario(send, config.url, config.dnsOrder)
     .then(() => {
       send("done.");
       event.sender.send("end-diagnosis");
@@ -44,7 +49,17 @@ ipcMain.on("start-diagnosis", (event, url) => {
 });
 
 // Diagnosis scenario
-async function scenario(log, url) {
+async function scenario(log, url, dnsOrder) {
+  setDefaultResultOrder(dnsOrder);
+  log(`dns result order: ${getDefaultResultOrder()}`);
+  const parsedUrl = new URL(url);
+  const servers = await dns.lookup(parsedUrl.hostname, { all: true });
+  log(
+    `resolved ${parsedUrl.hostname} to: ${servers
+      .map((s) => s.address)
+      .join(", ")}`
+  );
+
   for (let fetcher of [fetchWithGot, fetchWithFetch, fetchWithAxios]) {
     log(`requesting ${url} with ${fetcher.name}`);
     try {

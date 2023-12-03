@@ -1,6 +1,6 @@
 {
     "name": "launcher-diagnosis",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Helper for diagnosing issues with electron",
     "main": "src/main.js",
     "scripts": {
