@@ -70,16 +70,6 @@ async function scenario(log, url, dnsOrder) {
   }
 }
 
-function getTimings(res) {
-  const timings = res.timings;
-  const start = timings.start;
-  res = {};
-  for (let key in timings) {
-    res[key] = timings[key] - start;
-  }
-  return res;
-}
-
 async function fetchWithGot(log, url) {
   const res = await got(url, {
     timeout: { request: 90000 },
