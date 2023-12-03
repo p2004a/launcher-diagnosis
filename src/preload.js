@@ -7,5 +7,4 @@ contextBridge.exposeInMainWorld("diagnosis", {
   onLog: (callback) => ipcRenderer.on("log", (event, arg) => callback(arg)),
   onEnd: (callback) =>
     ipcRenderer.on("end-diagnosis", (event, arg) => callback(arg)),
-  setDnsResultOrder: (order) => ipcRenderer.send("set-dns-result-order", order),
 });

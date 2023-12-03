@@ -5,6 +5,7 @@ window.onload = () => {
   const btn = document.getElementById("start");
   const url = document.getElementById("url");
   const dnsOrder = document.getElementById("dns-order");
+  const happyEyeballs = document.getElementById("happy-eyeballs");
 
   btn.addEventListener("click", () => {
     if (btn.disabled) return;
@@ -12,6 +13,7 @@ window.onload = () => {
     diagnosis.start({
       url: url.value.trim(),
       dnsOrder: dnsOrder.value,
+      happyEyeballs: happyEyeballs.checked,
     });
     btn.innerText = "running...";
     btn.disabled = true;

@@ -5,6 +5,7 @@ const path = require("node:path");
 const got = require("got");
 const axios = require("axios");
 const dns = require("node:dns").promises;
+const net = require("node:net");
 const { setDefaultResultOrder, getDefaultResultOrder } = require("node:dns");
 
 function createWindow() {
@@ -23,9 +24,6 @@ function createWindow() {
 app.whenReady().then(createWindow);
 app.on("window-all-closed", () => app.quit());
 
-// DNS result order
-ipcMain.on("set-dns-result-order", (event, order) => {});
-
 ipcMain.on("start-diagnosis", (event, config) => {
   const start = Date.now();
   function send(msg) {
@@ -36,20 +34,20 @@ ipcMain.on("start-diagnosis", (event, config) => {
   }
   send("start");
 
-  scenario(send, config.url, config.dnsOrder)
+  scenario(send, config.url, config.dnsOrder, config.happyEyeballs)
     .then(() => {
       send("done.");
       event.sender.send("end-diagnosis");
     })
     .catch((err) => {
       send("error.");
-      send(JSON.stringify(err));
+      send(err.toString());
       event.sender.send("end-diagnosis");
     });
 });
 
 // Diagnosis scenario
-async function scenario(log, url, dnsOrder) {
+async function scenario(log, url, dnsOrder, happyEyeballs) {
   setDefaultResultOrder(dnsOrder);
   log(`dns result order: ${getDefaultResultOrder()}`);
   const parsedUrl = new URL(url);
@@ -59,6 +57,9 @@ async function scenario(log, url, dnsOrder) {
       .map((s) => s.address)
       .join(", ")}`
   );
+
+  net.setDefaultAutoSelectFamily(happyEyeballs);
+  log(`happy eyeballs: ${net.getDefaultAutoSelectFamily()}`);
 
   for (let fetcher of [fetchWithGot, fetchWithFetch, fetchWithAxios]) {
     log(`requesting ${url} with ${fetcher.name}`);
@@ -72,7 +73,7 @@ async function scenario(log, url, dnsOrder) {
 
 async function fetchWithGot(log, url) {
   const res = await got(url, {
-    timeout: { request: 90000 },
+    timeout: { request: 30000 },
     hooks: {
       beforeRetry: [
         (options, error, retryCount) => {
@@ -95,7 +96,7 @@ async function fetchWithFetch(log, url) {
   const timeoutId = setTimeout(() => {
     log(`aborting request`);
     ac.abort();
-  }, 60000);
+  }, 30000);
   const res = await fetch(url, {
     signal: ac.signal,
   });
@@ -105,7 +106,7 @@ async function fetchWithFetch(log, url) {
 
 async function fetchWithAxios(log, url) {
   const res = await axios.get(url, {
-    timeout: 90000,
+    timeout: 30000,
   });
   log(`got response: ${res.status}: ${res.statusText}`);
 }
