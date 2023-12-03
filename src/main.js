@@ -3,6 +3,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
 const got = require("got");
+const axios = require("axios");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -20,7 +21,7 @@ function createWindow() {
 app.whenReady().then(createWindow);
 app.on("window-all-closed", () => app.quit());
 
-ipcMain.on("start-diagnosis", (event, arg) => {
+ipcMain.on("start-diagnosis", (event, url) => {
   const start = Date.now();
   function send(msg) {
     event.sender.send(
@@ -30,7 +31,7 @@ ipcMain.on("start-diagnosis", (event, arg) => {
   }
   send("start");
 
-  scenario(send)
+  scenario(send, url)
     .then(() => {
       send("done.");
       event.sender.send("end-diagnosis");
@@ -43,12 +44,29 @@ ipcMain.on("start-diagnosis", (event, arg) => {
 });
 
 // Diagnosis scenario
-async function scenario(log) {
-  const url = "https://launcher-config.beyondallreason.dev/config.json";
-  //const url = "https://httpbin.org/status/500";
+async function scenario(log, url) {
+  for (let fetcher of [fetchWithGot, fetchWithFetch, fetchWithAxios]) {
+    log(`requesting ${url} with ${fetcher.name}`);
+    try {
+      await fetcher(log, url);
+    } catch (err) {
+      log(`fetching failed with: ${err}`);
+    }
+  }
+}
 
-  log(`requesting ${url}`);
-  const request = got(url, {
+function getTimings(res) {
+  const timings = res.timings;
+  const start = timings.start;
+  res = {};
+  for (let key in timings) {
+    res[key] = timings[key] - start;
+  }
+  return res;
+}
+
+async function fetchWithGot(log, url) {
+  const res = await got(url, {
     timeout: { request: 90000 },
     hooks: {
       beforeRetry: [
@@ -58,12 +76,31 @@ async function scenario(log) {
       ],
       beforeRequest: [
         (options) => {
-          log(`starting real request}`);
+          log(`starting real requests`);
         },
       ],
     },
   });
+  log(`got response: ${res.statusCode}: ${res.statusMessage}`);
+  log(`timings: ${JSON.stringify(res.timings.phases)}`);
+}
 
-  const response = await request;
-  log(`got response: ${response.statusCode} ${response.statusMessage}`);
+async function fetchWithFetch(log, url) {
+  const ac = new AbortController();
+  const timeoutId = setTimeout(() => {
+    log(`aborting request`);
+    ac.abort();
+  }, 60000);
+  const res = await fetch(url, {
+    signal: ac.signal,
+  });
+  log(`got response: ${res.status}: ${res.statusText}`);
+  clearTimeout(timeoutId);
+}
+
+async function fetchWithAxios(log, url) {
+  const res = await axios.get(url, {
+    timeout: 90000,
+  });
+  log(`got response: ${res.status}: ${res.statusText}`);
 }

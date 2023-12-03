@@ -3,11 +3,13 @@
 window.onload = () => {
   const out = document.getElementById("diagnosis-out");
   const btn = document.getElementById("start");
+  const url = document.getElementById("url");
 
   btn.addEventListener("click", () => {
     if (btn.disabled) return;
     out.textContent = "";
-    diagnosis.start();
+    diagnosis.start(url.value.trim());
+    btn.innerText = "running..."
     btn.disabled = true;
   });
 
@@ -18,5 +20,6 @@ window.onload = () => {
 
   diagnosis.onEnd((arg) => {
     btn.disabled = false;
+    btn.innerText = "start";
   });
 };
